@@ -1,0 +1,181 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href="/manager/webserver/assets/css/font.awesome.css">
+    <script type="text/javascript" src="/manager/webserver/assets/js/jquery.js"></script>
+    <style type="text/css">
+        .device-input {
+            width: 100%;
+            border: 1px solid #ddd;
+            border-radius: 3px;
+            height: 40px;
+            box-sizing: border-box;
+            padding: 0 10px 0 10px;
+            font-size: 14px;
+            box-shadow: 0 1px 1px rgba(0, 0, 0, 0.05);
+            transition: all .3s;
+            margin-bottom: 3px;
+            font-family: "Roboto";
+            font-weight: 300;
+        }
+
+        .error {
+            border: 1px solid;
+            border-radius: 3px;
+            margin: 10px 0px;
+            padding: 15px 10px 15px 15px;
+            background-repeat: no-repeat;
+            background-position: 10px center;
+            color: #D8000C;
+            background-color: #FFBABA;
+        }
+
+        .center-div {
+            position: absolute;
+            margin: auto;
+            top: 0;
+            right: 0;
+            bottom: 0;
+            left: 0;
+            width: 100px;
+            height: 100px;
+        }
+
+    </style>
+</head>
+<body>
+<div id="content">
+    <p data-i18n="settings.pair.setup_intro"></p>
+
+    <div id="errorText" class="error" style="display:none;">
+        <p style="padding-bottom:0;" data-i18n="settings.pair.setup_failed"></p>
+        <p style="padding-bottom:0; margin-top: 6px; font-style: italic;" data-i18n="settings.pair.setup_failed_hint"></p>
+    </div>
+
+    <button id="submitButton" type="submit" class="button" style="margin-top:3px;" onclick="startDiscovery()" data-i18n="settings.pair.start_discovery"></button>
+
+</div>
+
+<div id="loading" class="center-div" style="display:none;">
+    <div class="fa fa-cog fa-spin fa-5x"></div>
+</div>
+
+<div id="startAuth" class="device-input" style="display:none;">
+    <p style="padding-bottom:0;" data-i18n="settings.pair.authDescription"></p>
+    <p style="padding-bottom:0; margin-top: 6px; font-style: italic;" data-i18n="settings.pair.setup_failed_hint"></p>
+</div>
+
+</body>
+</html>
+
+<script type="text/javascript">
+    Homey.setTitle(__('settings.pair.title'));
+
+    // Catch enter click to submit form
+    $(document).keypress(function (e) {
+        if (e.keyCode == 13) {
+            $('#submitButton').click();
+        }
+    });
+
+    // Start discovery
+    function startDiscovery() {
+        // Check if device is valid in the backend
+
+        // Show loading icon
+        $("#content").hide();
+        $("#loading").show();
+
+        Homey.emit("discovery", {}, function (err, aircon) {
+            if (!err && aircon) {
+                // Device found, start authentication
+                startAuthentication(aircon);
+
+            } else {
+                // Show error
+                $("#errorText").show();
+
+                // Show content
+                $("#content").show();
+                $("#loading").hide();
+            }
+        });
+    }
+
+    function startAuthentication(aircon) {
+
+	    // Show authentication field
+        $("#startAuth").show();
+
+        Homey.emit("authenticate", {aircon}, function (err, token) {
+            console.log("Aircon", aircon);
+            console.log("Error", err);
+            console.log("Token", token);
+
+            if (!err && token && aircon) {
+                addDevice(aircon, token);
+            } else {
+                $("#startAuth").hide();
+                $("#loading").hide();
+                $("#errorText").show();
+            }
+        });
+    }
+
+    // Settings done, save device
+    function addDevice(device, token) {
+
+        // Show loading icon
+        $("#content").hide();
+        $("#loading").show();
+
+        // Check if device is valid in the backend
+        Homey.emit("validate_device", {
+            aircon: device,
+            token: token
+        }, function (err, result) {
+            console.log(err);
+            console.log(result);
+            // Check for valid input
+            if (!err && result) {
+
+                // Create device object
+                var device = {
+                    name: "Samsung Smart Aircon",
+                    data: {
+                        id: token,
+                        aircon: aircon
+                    }
+                };
+
+                // Add device to homey
+                // TODO prevent adding duplicate device?
+                Homey.addDevice(device, function (err, result) {
+                    if (err) {
+
+                        // Show error
+                        $("#errorText").show();
+
+                        // Show content
+                        $("#content").show();
+                        $("#loading").hide();
+                    } else {
+
+                        // Add device on the backend
+                        Homey.emit("add_device", device);
+
+                        // Succes
+                        Homey.showView("add_nefit_easy");
+                    }
+                });
+            } else {
+                // Show error
+                $("#errorText").show();
+
+                // Show content
+                $("#content").show();
+                $("#loading").hide();
+            }
+        });
+    }
+</script>

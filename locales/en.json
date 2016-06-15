@@ -1,0 +1,14 @@
+{
+    "settings" : {
+        "pair" : {
+            "title" : "Pair your Samsung Smart Aircon",
+            "setup_intro" : "This will add a Wi-Fi connected Samsung Smart aircon to your Homey",
+            "add" : "Add",
+            "discovery" : "Homey will attempt to automatically discover your Samsung Smart Aircon",
+            "start_discovery" : "Discover",
+            "setup_failed" : "Setup failed",
+            "setup_failed_hint" : "Make sure the aircon is powered and connected to your Wi-Fi network",
+            "authDescription" : "Device found. Please power on the device within the next 30 seconds"
+        }
+    }
+}

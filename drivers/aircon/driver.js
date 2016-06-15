@@ -63,15 +63,8 @@ module.exports.pair = function (socket) {
 
     socket.on("discovery", function (settings, callback) {
 
-/*
-        var Wunderground = require('wundergroundnode');
-        var wunderground;
-        wunderground = new Wunderground(key);
-*/
-        var samsungAPI = require('samsung-airconditioner').API;
-        var samsungairco;
-        samsungairco = new samsungAPI();
-        samsungairco.on('discover', function(aircon) {
+        var API = require('samsung-airconditioner').API;
+        new API().on('discover', function(aircon) {
         	callback(null, aircon)
         }).on('error', function(err) {
             console.log('discovery error: ' + err.message);
